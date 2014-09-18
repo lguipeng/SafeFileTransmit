@@ -381,10 +381,10 @@ int WriteLoginLog(char *user,char *clientip)
 {
   int logfd;
   char logdata[USENAMESIZE+50]="\0";   //15是ip地址的长度 ,加上换行回车
-  logfd=open(LOGINLOGPATH,O_RDWR|O_APPEND|O_CREAT,S_IRUSR|S_IWUSR);
-  if(logfd==-1)
+  logfd = open(LOGINLOGPATH,O_RDWR|O_APPEND|O_CREAT,S_IRUSR|S_IWUSR);
+  if(logfd == -1)
      return ERROR;
-  time_t timep=time(NULL);
+  time_t timep = time(NULL);
   strcat(logdata,user);
   strcat(logdata,"\t");
   strcat(logdata,clientip);
@@ -529,21 +529,20 @@ int makeDir(char *username)
 void* handler(void* arg)
 {
  head:pthread_mutex_lock(&pthreadMutex);
-  		pthread_cond_wait(&pthreadCond,&pthreadMutex);
-  		pthread_mutex_unlock(&pthreadMutex);
-  		char user[USENAMESIZE]="\0";
-  		int new_fd=tempsockfd;
-  		SSL *ssl;
-  		ssl = SSL_new(ctx);
- /* 将连接用户的 socket 加入到 SSL */
+  	  pthread_cond_wait(&pthreadCond,&pthreadMutex);
+  	  pthread_mutex_unlock(&pthreadMutex);
+  	  char user[USENAMESIZE]="\0";
+  	  int new_fd=tempsockfd;
+  	  SSL *ssl;
+  	  ssl = SSL_new(ctx);
+     /* 将连接用户的 socket 加入到 SSL */
       SSL_set_fd(ssl, new_fd);	
-    if (SSL_accept(ssl) == -1)
+     if(SSL_accept(ssl) == -1)
      {
-      perror("Accept");
-      close(new_fd);
+       perror("Accept");
+       close(new_fd);
      }
-    SSL *NewFd=ssl;
-    
+    SSL *NewFd=ssl;   
     DataPackage Datapack;
 registers:
 	  SSL_read(NewFd,&Datapack,sizeof(DataPackage));
@@ -570,17 +569,17 @@ registers:
        }	
     	} else
     	{
-    	clientFD[CURRENTCLIENT]=NewFd;
-    	strncpy(user,Datapack.Sender,strlen(Datapack.Sender));
-      OptMysql(user,Datapack.Password,4);
-      OptMysql(user,Datapack.Password,6);
-      CURRENTCLIENT++;
-      Datapack=Package('L',0,voidStr,voidStr,voidStr,voidStr,voidStr,0);
-      SSL_write(NewFd,&Datapack,sizeof(struct DataPackage));
-      Datapack.Cmd='F';
-      getList(user,Datapack.Buf);
-      SSL_write(NewFd,&Datapack,sizeof(struct DataPackage));
-      WriteLoginLog(user,clientIP);	
+		  clientFD[CURRENTCLIENT]=NewFd;
+		  strncpy(user,Datapack.Sender,strlen(Datapack.Sender));
+		  OptMysql(user,Datapack.Password,4);
+		  OptMysql(user,Datapack.Password,6);
+		  CURRENTCLIENT++;
+		  Datapack=Package('L',0,voidStr,voidStr,voidStr,voidStr,voidStr,0);
+		  SSL_write(NewFd,&Datapack,sizeof(struct DataPackage));
+		  Datapack.Cmd='F';
+		  getList(user,Datapack.Buf);
+		  SSL_write(NewFd,&Datapack,sizeof(struct DataPackage));
+		  WriteLoginLog(user,clientIP);	
     	}  		 
     }
    if(Datapack.Cmd=='R')
@@ -595,7 +594,7 @@ registers:
     	  makeDir(Datapack.Sender);
     	  strncpy(user,Datapack.Sender,strlen(Datapack.Sender));
     	  Datapack=Package('R',0,voidStr,voidStr,voidStr,voidStr,voidStr,0);
-       	SSL_write(NewFd,&Datapack,sizeof(struct DataPackage));
+       	  SSL_write(NewFd,&Datapack,sizeof(struct DataPackage));
       }else
       {
        	bzero(&Datapack,sizeof(DataPackage));
@@ -752,11 +751,9 @@ registers:
     		  }	
     		}
     		if(Datapack.Ack==4)
-    		{
-    		   	
-    		   	strncpy(sender,Datapack.Sender,strlen(Datapack.Sender));
-    	      int fdnum_send=getFdNum(sender);
-    	     
+    		{   		   	
+    		  strncpy(sender,Datapack.Sender,strlen(Datapack.Sender));
+    	      int fdnum_send=getFdNum(sender);   	     
     	      if(fdnum_send!=ERROR)
     	      {
     	        SSL_write(clientFD[fdnum_send],&Datapack,sizeof(struct DataPackage));	
@@ -765,9 +762,8 @@ registers:
     		if(Datapack.Ack==3)
     		{
     		  strncpy(sender,Datapack.Sender,strlen(Datapack.Sender));
-    	    fdnum_send=getFdNum(sender);
-    	  
-    	    if(fdnum_send!=ERROR)
+    	      fdnum_send = getFdNum(sender);    	  
+    	      if(fdnum_send != ERROR)
     	      {
     	        SSL_write(clientFD[fdnum_send],&Datapack,sizeof(struct DataPackage));	
     	      }	
@@ -832,44 +828,44 @@ void* mainThread(void* arg)
     exit(1);
   }
   
-  if(SetupTcp()==ERROR)
+  if(SetupTcp() == ERROR)
   	exit(1);
-	sin_size=sizeof(struct sockaddr_in);
-	CreatAllThread();
+  sin_size=sizeof(struct sockaddr_in);
+  CreatAllThread();
   while(1)
   {
     if(ISEXIT==0)	
   	{
-  		if((newsockfd = accept(sockfd,(struct sockaddr *)(&client_addr),&sin_size)) == -1)
-			{
-					perror("accept error!");
-					continue; 
-			}
-			if(CURRENTCLIENT>=CLIENTSIZE)
-      {
-      cout<<"beyond connect number 1"<<endl;
-      DataPackage Datapack;
-      Datapack=Package('L',2,voidStr,voidStr,voidStr,voidStr,voidStr,0);
-      SSL *ssl;
-  		ssl = SSL_new(ctx);
-   /* 将连接用户的 socket 加入到 SSL */
-      SSL_set_fd(ssl, newsockfd);	
-     if(SSL_accept(ssl) == -1)
-     {
-      perror("Accept");
-      close(newsockfd);
-     }
-      SSL_write(ssl,&Datapack,sizeof(struct DataPackage));
-      cout<<"beyond connect number 2"<<endl;
-      SSL_shutdown(ssl);
-       /* 释放 SSL */
-      SSL_free(ssl);
-      close(newsockfd);	
-      continue; 	
-      }
-			tempsockfd=newsockfd;
-			strcpy(clientIP,inet_ntoa(client_addr.sin_addr));
-			pthread_cond_signal(&pthreadCond);		
+	   if((newsockfd = accept(sockfd,(struct sockaddr *)(&client_addr),&sin_size)) == -1)
+		{
+				perror("accept error!");
+				continue; 
+		}
+		if(CURRENTCLIENT >= CLIENTSIZE)
+       {
+		  cout<<"beyond connect number 1"<<endl;
+		  DataPackage Datapack;
+		  Datapack=Package('L',2,voidStr,voidStr,voidStr,voidStr,voidStr,0);
+		  SSL *ssl;
+		  ssl = SSL_new(ctx);
+	   /* 将连接用户的 socket 加入到 SSL */
+		  SSL_set_fd(ssl, newsockfd);	
+		 if(SSL_accept(ssl) == -1)
+		 {
+		  perror("Accept");
+		  close(newsockfd);
+		 }
+		  SSL_write(ssl,&Datapack,sizeof(struct DataPackage));
+		  cout<<"beyond connect number 2"<<endl;
+		  SSL_shutdown(ssl);
+		   /* 释放 SSL */
+		  SSL_free(ssl);
+		  close(newsockfd);	
+		  continue; 	
+        }
+		tempsockfd = newsockfd;
+		strcpy(clientIP,inet_ntoa(client_addr.sin_addr));
+		pthread_cond_signal(&pthreadCond);		
   	}else
   	{
   	  close(sockfd);
@@ -906,8 +902,8 @@ void *mainMenu(void* arg)
  }
  while(1)
  {
-   cout<<"*******1.Add Administrator******"<<endl;
-   cout<<"*******2.Run  Server******"<<endl;	
+     cout<<"*******1.Add Administrator******"<<endl;
+     cout<<"*******2.Run  Server******"<<endl;	
 	 cout<<"*******3.Stop Server*******"<<endl;	
 	 cout<<"*******4.Show Online User*******"<<endl;	
 	 cout<<"*******5.EXIT*************"<<endl;
@@ -921,13 +917,13 @@ void *mainMenu(void* arg)
 	 		cout<<"new administrator name:";
 	 		cin>>admun;
 	 		admup=getpass("password:");
-	 		if(OptMysql(admun,admup,7)==ERROR)
+	 		if(OptMysql(admun,admup,7) == ERROR)
 	 			exit(0);
 	 	}
-	  case 2:ISEXIT=0;system("clear");cout<<"Server is Running\n";break;
-	  case 3:ISEXIT=1;system("clear");cout<<"Server Stop\n";break;
-	  case 4:system("clear");OptMysql(voidStr,voidStr,8);break;
-	  case 5:exit(0);mysql_close(&my_connection);		
+	    case 2:ISEXIT = 0;system("clear");cout<<"Server is Running\n";break;
+	    case 3:ISEXIT = 1;system("clear");cout<<"Server Stop\n";break;
+	    case 4:system("clear");OptMysql(voidStr,voidStr,8);break;
+	    case 5:exit(0);mysql_close(&my_connection);		
 	 }
  }
  
@@ -937,13 +933,13 @@ int main(int argc,char *argv[])
 	pthread_t mainmenu;
 	pthread_t mainthread;
 	mysql_init(&my_connection);
-	int ret=pthread_create(&mainmenu,NULL,mainMenu,NULL);
+	int ret = pthread_create(&mainmenu,NULL,mainMenu,NULL);
 	if(ret!=0)
 	{
 	   cout<<"creat mainmenu thread error"<<endl;
 	   return ERROR;
 	}
-	ret=pthread_create(&mainthread,NULL,mainThread,NULL);
+	ret = pthread_create(&mainthread,NULL,mainThread,NULL);
 	if(ret!=0)
 	{
 	   cout<<"creat mainthread thread error"<<endl;

@@ -10,7 +10,8 @@ struct sockaddr_in dest;
 DataPackage dataPack;
 DataPackage recievePack;
 char serverIP[15];
-bool LRE=true;
+//是否已经登录
+bool LRE = true;
 bool ISEXIT=false;
 char user[USENAMESIZE]="\0";
 char sender[USENAMESIZE]="\0";
@@ -29,7 +30,7 @@ void freeResource()
 /*连接至服务器*/
 int connectToserver(char* serverIP)
 {
-	SSL_library_init();
+  SSL_library_init();
   OpenSSL_add_all_algorithms();
   SSL_load_error_strings();
   ctx = SSL_CTX_new(SSLv23_client_method());
@@ -112,10 +113,10 @@ int listFileInSever()
 /*下载文件*/
 int downloadFile(char* filename)
 {
-	char filepath[PATHSIZE]="./";
+	char filepath[PATHSIZE] = "./";
 	strcat(filepath,filename);
-	FILE* fd=fopen(filepath,"wb");
-	if(fd==NULL)
+	FILE* fd = fopen(filepath,"wb");
+	if(fd == NULL)
 	{
 		cout<<"download file error\n";
 		return ERROR;
@@ -124,30 +125,36 @@ int downloadFile(char* filename)
 	{
 	  bzero(&recievePack.Buf,FILELISTSIZE);
 	  SSL_read(ssl,&recievePack,sizeof(DataPackage));
-	  if(recievePack.Ack==0)
-	  fwrite(recievePack.Buf,sizeof(char),recievePack.FileSize,fd);
-	  else
-	  	break;
-  }
-  fclose(fd);
-  return SUCESS;
+	  if(recievePack.Ack == 0)
+	  {
+		fwrite(recievePack.Buf,sizeof(char),recievePack.FileSize,fd);
+	  }else if(recievePack.Ack == 2) //下载的文件不存在
+	  {
+	    fclose(fd);
+        return ERROR;
+	  }else{         //下载完成
+	    break;
+	  }
+	  	
+    }
+    fclose(fd);
+    return SUCESS;
 }
 int recieveFile(char* filename)
 {
 	char filepath[PATHSIZE]="./";
 	strcat(filepath,filename);
 	FILE* fd=fopen(filepath,"wb");
-	if(fd==NULL)
+	if(fd == NULL)
 	{
 		cout<<"recieve error \n";
 		return ERROR;
 	}
 	while(1)
 	{
-	  if(recievePack.Ack==5)
+	  if(recievePack.Ack == 5)
 	  {
-	    fwrite(recievePack.Buf,sizeof(char),recievePack.FileSize,fd);
-	    
+	    fwrite(recievePack.Buf,sizeof(char),recievePack.FileSize,fd);	    
 	  }  
 	  else
 	  	break;
@@ -160,9 +167,9 @@ int recieveFile(char* filename)
 /*从path得到最后的那个文件名*/
 int getFilename(char* path,char* filename)
 {
-  int i=strlen(path);
-  int j=i;
-  while(path[i]!='/')
+  int i = strlen(path);
+  int j = i;
+  while(path[i] != '/')
   {
    	i--;
   }	
@@ -172,9 +179,9 @@ int getFilename(char* path,char* filename)
 /*发送文件的信息到服务器端*/
 int sendFiledata(char *filename)
 {
-  int filesize=0;
+  int filesize = 0;
   struct stat filestat;
-  if(stat(path,&filestat)==-1)
+  if(stat(path,&filestat) == -1)
   {
   	cout<<"send file data error\n";
   	return ERROR;
@@ -190,33 +197,33 @@ int sendFiledata(char *filename)
 int updateFile(char *filename)
 {
   FILE* fd=fopen(path,"rb");
-  if(fd==NULL)
+  if(fd == NULL)
   {
   	cout<<"update file error\n";
   	return ERROR;
   }
   DataPackage datapack;
   bzero(&datapack.Buf,FILELISTSIZE);
-  int filesize=0;
+  int filesize = 0;
   struct stat filestat;
-  if(stat(path,&filestat)==-1)
+  if(stat(path,&filestat) ==- 1)
   {
   	cout<<"update file error\n";
   	return ERROR;
   }
   else
-  	filesize=filestat.st_size;
-  int count=filesize;
-  datapack=Package('U',9,voidStr,voidStr,voidStr,filename,voidStr,filesize);
-  while(fread(datapack.Buf,sizeof(char),1024,fd)!=0)
+  	filesize = filestat.st_size;
+  int count = filesize;
+  datapack = Package('U',9,voidStr,voidStr,voidStr,filename,voidStr,filesize);
+  while(fread(datapack.Buf,sizeof(char),1024,fd) != 0)
   {
-    if(count/1024!=0)
+    if(count/1024 != 0)
     {
-      datapack.FileSize=1024;
-      count=count-1024;
+      datapack.FileSize = 1024;
+      count = count-1024;
     }
     else
-    datapack.FileSize=count;
+      datapack.FileSize = count;
     SSL_write(ssl,&datapack,sizeof(struct DataPackage));	
     bzero(&datapack.Buf,FILELISTSIZE);
   }
@@ -228,34 +235,34 @@ int updateFile(char *filename)
 int sendFile(char *filename)
 {
   FILE* fd=fopen(path,"rb");
-  if(fd==NULL)
+  if(fd == NULL)
   {
   	cout<<"send file error\n";
   	return ERROR;
   }
   DataPackage datapack;
   bzero(&datapack.Buf,FILELISTSIZE);
-  int filesize=0;
+  int filesize = 0;
   struct stat filestat;
-  if(stat(path,&filestat)==-1)
+  if(stat(path,&filestat) == -1)
   	return ERROR;
   else
-  	filesize=filestat.st_size;
-  int count=filesize;
-  datapack=Package('S',5,user,voidStr,voidStr,filename,voidStr,filesize);
-  while(fread(datapack.Buf,sizeof(char),1024,fd)!=0)
+  	filesize = filestat.st_size;
+  int count = filesize;
+  datapack = Package('S',5,user,voidStr,voidStr,filename,voidStr,filesize);
+  while(fread(datapack.Buf,sizeof(char),1024,fd) != 0)
   {
-    if(count/1024!=0)
+    if(count/1024 != 0)
     {
-      datapack.FileSize=1024;
-      count=count-1024;
+      datapack.FileSize = 1024;
+      count = count-1024;
     }
     else
-    datapack.FileSize=count;
+    datapack.FileSize = count;
     SSL_write(ssl,&datapack,sizeof(struct DataPackage));	
     bzero(&datapack.Buf,FILELISTSIZE);
   }
-  datapack=Package('S',6,voidStr,voidStr,voidStr,filename,voidStr,filesize);
+  datapack = Package('S',6,voidStr,voidStr,voidStr,filename,voidStr,filesize);
   SSL_write(ssl,&datapack,sizeof(struct DataPackage));	
   fclose(fd); 	
   return SUCESS;
@@ -350,32 +357,32 @@ void* mainMenu(void* arg)
    char *up;
  while(LRE)
  {
-   cout<<"*******1.Login in******"<<endl;	
-   cout<<"*******2.Register User*******"<<endl;
+     cout<<"*******1.Login in******"<<endl;	
+     cout<<"*******2.Register User*******"<<endl;
 	 cout<<"*******3.EXIT*******"<<endl;
 	 cin>>choice;
 	 switch(choice)
 	 {
-	 case 1:cout<<"Login Name:";
-	        cin>>un;
-	        up=getpass("Password:"); 
-	 	      dataPack=Package('L',9,un,up,voidStr,voidStr,voidStr,0);
-	  	    SSL_write(ssl,&dataPack,sizeof(struct DataPackage));
-	  	    sleep(1);
-	  	    break;
-	 case 2:cout<<"New User Name:";
-	 	      cin>>un;
-	 	      up=getpass("New Password:");
-	 	      dataPack=Package('R',9,un,up,voidStr,voidStr,voidStr,0);
-	 	      SSL_write(ssl,&dataPack,sizeof(struct DataPackage));
-	 	      sleep(1);
-	 	      break;
-	 case 3:
-	 	      dataPack=Package('Q',0,voidStr,voidStr,voidStr,voidStr,voidStr,0);
-	 	      SSL_write(ssl,&dataPack,sizeof(struct DataPackage));
-	 	      ISEXIT==true;
-	 	      pthread_exit((void*)0);
-	 	      break;
+		 case 1:cout<<"Login Name:";
+				cin>>un;
+				up=getpass("Password:"); 
+				  dataPack=Package('L',9,un,up,voidStr,voidStr,voidStr,0);
+				SSL_write(ssl,&dataPack,sizeof(struct DataPackage));
+				sleep(1);
+				break;
+		 case 2:cout<<"New User Name:";
+				  cin>>un;
+				  up=getpass("New Password:");
+				  dataPack=Package('R',9,un,up,voidStr,voidStr,voidStr,0);
+				  SSL_write(ssl,&dataPack,sizeof(struct DataPackage));
+				  sleep(1);
+				  break;
+		 case 3:
+				  dataPack=Package('Q',0,voidStr,voidStr,voidStr,voidStr,voidStr,0);
+				  SSL_write(ssl,&dataPack,sizeof(struct DataPackage));
+				  ISEXIT == true;
+				  pthread_exit((void*)0);
+				  break;
 	 }
  }
  strncpy(user,un,strlen(un));
@@ -515,11 +522,11 @@ void my_exit(int sign_no)
 {
 	if(sign_no==SIGINT)
 	{
-    dataPack=Package('Q',1,voidStr,voidStr,voidStr,voidStr,voidStr,0);
-    SSL_write(ssl,&dataPack,sizeof(struct DataPackage));
-	 	ISEXIT==true;
-	 	cout<<"\ninterupt exit sucess!"<<endl;
-	 	exit(1);	
+		dataPack=Package('Q',1,voidStr,voidStr,voidStr,voidStr,voidStr,0);
+		SSL_write(ssl,&dataPack,sizeof(struct DataPackage));
+		ISEXIT == true;
+		cout<<"\ninterupt exit sucess!"<<endl;
+		exit(1);	
 	}
 }
 

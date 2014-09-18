@@ -54,13 +54,13 @@ typedef struct DataPackage
 DataPackage Package(char cmd,int ack,char* sender,char* password,char* geter,char* filename,char* buf,int filesize)
 {
   DataPackage pack;
-  pack.Cmd=cmd;
-  pack.Ack=ack;
+  pack.Cmd = cmd;
+  pack.Ack = ack;
   strncpy(pack.Sender,sender,strlen(sender));
   strncpy(pack.Password,password,strlen(password));
   strncpy(pack.Geter,geter,strlen(geter));
   strncpy(pack.FileName,filename,strlen(filename));
   strncpy(pack.Buf,buf,strlen(buf));
-  pack.FileSize=filesize;
+  pack.FileSize = filesize;
   return pack;
 }
